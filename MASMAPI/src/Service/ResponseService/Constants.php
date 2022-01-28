@@ -1,0 +1,13 @@
+<?php
+
+
+namespace App\Service\ResponseService;
+
+
+class Constants
+{
+    public const MSG_200_0000 = 'msg.200.0000';
+    public const MSG_401_0000 = 'msg.401.0000';
+    public const MSG_401_0001 = 'msg.401.0001';
+    public const MSG_500_0000 = 'msg.500.0000';
+}

@@ -1,0 +1,25 @@
+security:
+    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    providers:
+        authenticated_api_provider:
+            id: App\Security\Providers\AuthenticatedProvider
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            pattern: ^/
+            anonymous: lazy
+            stateless: true
+            guard:
+                authenticators:
+                    - App\Security\Middleware\DeviceIdAuthenticator
+                provider: authenticated_api_provider
+
+    always_authenticate_before_granting: true
+
+    # Easy way to control access for large sections of your site
+    # Note: Only the *first* access control that matches will be used
+    access_control:
+    # - { path: ^/admin, roles: ROLE_ADMIN }
+    # - { path: ^/profile, roles: ROLE_USER }
