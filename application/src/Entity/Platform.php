@@ -35,9 +35,9 @@ class Platform
     private $code;
 
     /**
-     * @ORM\OneToMany(targetEntity=UserDevice::class, mappedBy="platform")
+     * @ORM\Column(type="json")
      */
-    private $userDevices;
+    private $settings;
 
     public function __construct()
     {
@@ -86,32 +86,18 @@ class Platform
     }
 
     /**
-     * @return Collection|UserDevice[]
+     * @return mixed
      */
-    public function getUserDevices(): Collection
+    public function getSettings()
     {
-        return $this->userDevices;
+        return $this->settings;
     }
 
-    public function addUserDevice(UserDevice $userDevice): self
+    /**
+     * @param mixed $settings
+     */
+    public function setSettings($settings): void
     {
-        if (!$this->userDevices->contains($userDevice)) {
-            $this->userDevices[] = $userDevice;
-            $userDevice->setPlatform($this);
-        }
-
-        return $this;
-    }
-
-    public function removeUserDevice(UserDevice $userDevice): self
-    {
-        if ($this->userDevices->removeElement($userDevice)) {
-            // set the owning side to null (unless already changed)
-            if ($userDevice->getPlatform() === $this) {
-                $userDevice->setPlatform(null);
-            }
-        }
-
-        return $this;
+        $this->settings = $settings;
     }
 }
