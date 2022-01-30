@@ -19,7 +19,7 @@ class Authenticated implements UserInterface
 
     public function __construct(UserSession $session, array $roles = [], ?UserSession $nextSession = null)
     {
-        $this->setRoles($roles)->setSession($session)->setNextSession($nextSession);
+        $this->setRoles(['ROLE_USER'])->setSession($session)->setNextSession($nextSession);
     }
 
     /**

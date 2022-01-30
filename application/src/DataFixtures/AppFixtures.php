@@ -24,19 +24,20 @@ class AppFixtures extends Fixture
         $appRepo = $manager->getRepository(Application::class);
         $appResponse = $appRepo->insertBulk($application);
         $platform = [];
-        $type = ['ios','android'];
-        foreach ($appResponse->getResponse() as $application)
-        {
-            if($application instanceof Application)
-            {
-                foreach ($type as $platformType)
-                {
+        $type = ['ios', 'android'];
+        foreach ($appResponse->getResponse() as $application) {
+            if ($application instanceof Application) {
+                foreach ($type as $platformType) {
                     $platform[] = [
-                        'title' => $application->getTitle().' - '.$platformType,
+                        'title' => $application->getTitle() . ' - ' . $platformType,
                         'app' => $application,
-                        'code' => $application->getAppCode().'_'.$platformType,
-                        'settings' => [],
-                        'apiKey' => hash('sha256', $application->getAppCode().'_'.$platformType)
+                        'code' => $application->getAppCode() . '_' . $platformType,
+                        'settings' => [
+                            'username' => hash('sha256', $application->getAppCode() . '_' . $platformType . '_username'),
+                            'password' => hash('sha256', $application->getAppCode() . '_' . $platformType . '_password'),
+                            'url' => 'http://localhost/mock/'.$platformType == 'ios'?'apple':'google'
+                        ],
+                        'apiKey' => hash('sha256', $application->getAppCode() . '_' . $platformType)
                     ];
                 }
             }

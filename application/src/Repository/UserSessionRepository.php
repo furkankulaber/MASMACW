@@ -32,19 +32,41 @@ class UserSessionRepository extends BaseRepository
 
             $qb->where($qb->expr()->eq('s.user', ':user'))->setParameter('user', $userId);
             $qb->andWhere($qb->expr()->gt('s.expireAt', ':expireAt'))->setParameter('expireAt', new \DateTime('now', new \DateTimeZone('-6')));
-            $qb->andWhere($qb->expr()->eq('s.device', ':device'))->setParameter('device',$deviceId);
+            $qb->andWhere($qb->expr()->eq('s.device', ':device'))->setParameter('device', $deviceId);
 
             $qb->orderBy('s.expireAt', 'DESC');
             $qb->setMaxResults(1);
 
             $return = $qb->getQuery()->getOneOrNullResult();
-        }catch (\Exception $exception)
-        {
+        } catch (\Exception $exception) {
             return new RepositoryResponse($exception);
         }
 
         return new RepositoryResponse($return);
 
+    }
+
+    /**
+     * @param string $token
+     * @return RepositoryResponse
+     */
+    public function getAvailableSession(string $token): RepositoryResponse
+    {
+        try {
+            $qb = $this->getEntityManager()->createQueryBuilder();
+            $qb->select('s')->from(UserSession::class, 's');
+
+            $qb->where($qb->expr()->eq('s.token', $qb->expr()->literal($token)))
+                ->andWhere($qb->expr()->gt('s.expireAt', ':expireAt'))->setParameter('expireAt', new \DateTime('now'));
+
+            $qb->setMaxResults(1);
+
+            $return = $qb->getQuery()->getOneOrNullResult();
+        } catch (\Exception $exception) {
+            return new RepositoryResponse($exception);
+        }
+
+        return new RepositoryResponse($return);
     }
 
 }

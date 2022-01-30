@@ -43,6 +43,10 @@ class ExceptionListener
             $exception = $this->getApiException()->createException(Constants::MSG_404_0000);
 
         }
+        else if ($exception instanceof AccessDeniedException)
+        {
+            $exception = $this->getApiException()->createException(Constants::MSG_401_0000);
+        }
         else if ($exception instanceof ValidatorException)
         {
             $exception = $this->getApiException()->createException(Constants::MSG_412_9999,['invalidPropertyName' => $exception->getMessage()]);

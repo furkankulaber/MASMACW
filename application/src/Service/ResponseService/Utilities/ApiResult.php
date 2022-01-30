@@ -9,7 +9,17 @@ use App\Service\ResponseService\ResponseInterface;
 class ApiResult implements ResponseInterface
 {
 
+
+
     private $set;
+
+    /**
+     * @param $set
+     */
+    public function __construct($set)
+    {
+        $this->set = $set;
+    }
 
     /**
      * @return mixed

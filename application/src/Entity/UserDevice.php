@@ -8,13 +8,13 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass=UserDeviceRepository::class)
  * @ORM\Table(name="user_devices", indexes={
- *     @ORM\Index(name="user_xn", columns={"user_id"}),
- *     @ORM\Index(name="platform_xn", columns={"platform_id"}),
- *     @ORM\Index(name="device_xn", columns={"device"}),
- *     @ORM\Index(name="language_xn", columns={"language"}),
+ *     @ORM\Index(columns={"user_id"}),
+ *     @ORM\Index(columns={"platform_id"}),
+ *     @ORM\Index(columns={"device"}),
+ *     @ORM\Index(columns={"language"}),
  *     },
  *     uniqueConstraints={
- *     @ORM\UniqueConstraint(name="user_device_platform_xu", columns={"user_id","device","platform_id"})
+ *     @ORM\UniqueConstraint(columns={"user_id","device","platform_id"})
  * })
  */
 class UserDevice
@@ -48,7 +48,7 @@ class UserDevice
     private $deviceInfo;
 
     /**
-     * @ORM\Column(type="string", length=4)
+     * @ORM\Column(type="string", length=6)
      */
     private $language;
 

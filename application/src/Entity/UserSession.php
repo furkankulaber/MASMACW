@@ -10,7 +10,15 @@ use Doctrine\ORM\Mapping as ORM;
  * Class UserSession
  * @package App\Entity
  *
- * @ORM\Table(name="`user_sessions`")
+ * @ORM\Table(name="`user_sessions`", indexes={
+ *     @ORM\Index(columns={"token"}),
+ *     @ORM\Index(columns={"user"}),
+ *     @ORM\Index(columns={"device"}),
+ *     @ORM\Index(columns={"expire_at"})
+ *     },
+ *     uniqueConstraints={
+ *     @ORM\UniqueConstraint(columns={"user","token","device"})
+ * })
  * @ORM\Entity(repositoryClass=UserSessionRepository::class)
  */
 class UserSession

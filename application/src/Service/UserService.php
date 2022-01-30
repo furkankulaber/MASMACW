@@ -14,6 +14,7 @@ use App\Service\ManagerService\TokenManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Faker\Factory;
 use Psr\Container\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class UserService
@@ -147,15 +148,21 @@ class UserService
      * @param Platform $platform
      * @return RepositoryResponse
      */
-    public function createUserWithDevice($data, string $device, Platform $platform): ServiceResponse
+    public function createUserWithDevice(Request $request, string $device, Platform $platform): ServiceResponse
     {
+        $data = json_decode($request->getContent(), true);
         $userDeviceResponse = $this->getUserOfDevice($device, $platform);
         if ($userDeviceResponse->getResponse() instanceof UserDevice) {
             return new ServiceResponse($userDeviceResponse->getResponse()->getUser());
         }
 
+        $userInfo = [
+            'agentData' => $request->server->get('HTTP_USER_AGENT'),
+            'userIp' => $request->getClientIp()
+        ];
+
         $faker = Factory::create('tr_TR');
-        $userDevice = $this->createUserDevice($device,$platform,$data['language']);
+        $userDevice = $this->createUserDevice($device,$platform,$data['language'],$userInfo);
         $insertUser = [
             'alias' => $faker->userName,
             'email' => $faker->email,
@@ -189,12 +196,13 @@ class UserService
         return $this->userDevicesRepo->userOfDevice($platform->getId(), $user);
     }
 
-    private function createUserDevice($device,$platform,$language): UserDevice
+    private function createUserDevice($device,$platform,$language,$userInfo): UserDevice
     {
         $userDevice = new UserDevice();
         $userDevice->setDevice($device)
             ->setLanguage($language)
-            ->setPlatform($platform);
+            ->setPlatform($platform)
+            ->setDeviceInfo($userInfo);
 
         return $userDevice;
     }

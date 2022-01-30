@@ -49,7 +49,7 @@ class DeviceIdAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
-        if($request->get("_route") === 'register'){
+        if($request->get("_route") === 'register' || $request->getPathInfo() === '/mock/google' || $request->getPathInfo() === '/mock/apple'){
             return false;
         }
         return true;
@@ -78,10 +78,10 @@ class DeviceIdAuthenticator extends AbstractGuardAuthenticator
         /** @var null|UserSession $availableSession */
         $availableSession = $sessionRepo->getAvailableSession($credentials['token']);
 
-        if(null === $availableSession)
+        if(null === $availableSession->getResponse())
             throw new \Exception($this->translator->trans(Constants::MSG_401_0000), 401);
 
-        return new Authenticated($availableSession);
+        return new Authenticated($availableSession->getResponse());
     }
 
     public function checkCredentials($credentials, UserInterface $user)
