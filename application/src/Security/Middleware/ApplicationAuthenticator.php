@@ -2,10 +2,13 @@
 
 namespace App\Security\Middleware;
 
+use App\Entity\Platform;
 use App\Entity\UserSession;
+use App\Repository\PlatformRepository;
+use App\Repository\RepositoryResponse;
 use App\Repository\UserSessionRepository;
 use App\Security\Authenticated;
-use App\Service\ManagerService\TokenManager;
+use App\Security\AuthenticatedApp;
 use App\Service\ResponseService\Constants;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,10 +19,10 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class DeviceIdAuthenticator extends AbstractGuardAuthenticator
+class ApplicationAuthenticator extends AbstractGuardAuthenticator
 {
 
-    public const KEY_IDENTIFIER = 'X-Session-Token';
+    public const KEY_IDENTIFIER = 'X-Api-Key';
 
     /** @var Request  */
     private Request $request;
@@ -30,13 +33,14 @@ class DeviceIdAuthenticator extends AbstractGuardAuthenticator
     /** @var ContainerInterface  */
     private ContainerInterface $container;
 
-    private TokenManager $tokenManager;
+    /** @var PlatformRepository */
+    private PlatformRepository $platformRepository;
 
-    public function __construct(TranslatorInterface $translator, ContainerInterface $container, TokenManager $tokenManager)
+    public function __construct(TranslatorInterface $translator, ContainerInterface $container)
     {
         $this->translator = $translator;
         $this->container = $container;
-        $this->tokenManager = $tokenManager;
+        $this->platformRepository = $container->get('doctrine')->getRepository(Platform::class);
     }
 
     public function start(Request $request, AuthenticationException $authException = null)
@@ -49,10 +53,7 @@ class DeviceIdAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
-        if($request->get("_route") === 'register'){
-            return false;
-        }
-        return true;
+        return null !== $request->headers->get(self::KEY_IDENTIFIER);
     }
 
     public function getCredentials(Request $request)
@@ -69,22 +70,16 @@ class DeviceIdAuthenticator extends AbstractGuardAuthenticator
         if (!isset($credentials['token']) || empty($credentials['token']))
             throw new \Exception($this->translator->trans(Constants::MSG_401_0000), 401);
 
-        date_default_timezone_set("Europe/Istanbul");
+        /** @var RepositoryResponse $platform */
+        $platform = $this->platformRepository->findOneBy(['apiKey' => $credentials['token']]);
 
-
-        /** @var UserSessionRepository $sessionRepo */
-        $sessionRepo = $this->container->get('doctrine.orm.default_entity_manager')->getRepository(UserSession::class);
-
-        /** @var null|UserSession $availableSession */
-        $availableSession = $sessionRepo->getAvailableSession($credentials['token']);
-
-        if(null === $availableSession)
+        if($platform->getResponse() === null)
             throw new \Exception($this->translator->trans(Constants::MSG_401_0000), 401);
 
-        return new Authenticated($availableSession);
+        return new AuthenticatedApp($platform->getResponse());
     }
 
-    public function checkCredentials($credentials, UserInterface $user)
+    public function checkCredentials($credentials, UserInterface $player)
     {
         return true;
     }

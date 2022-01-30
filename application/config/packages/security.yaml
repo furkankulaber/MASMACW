@@ -1,5 +1,4 @@
 security:
-    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
         authenticated_api_provider:
             id: App\Security\Providers\AuthenticatedProvider
@@ -13,8 +12,11 @@ security:
             stateless: true
             guard:
                 authenticators:
+                    - App\Security\Middleware\ApplicationAuthenticator
                     - App\Security\Middleware\DeviceIdAuthenticator
                 provider: authenticated_api_provider
+                entry_point: App\Security\Middleware\ApplicationAuthenticator
+
 
     always_authenticate_before_granting: true
 

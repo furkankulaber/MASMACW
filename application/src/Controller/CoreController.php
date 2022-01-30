@@ -16,13 +16,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use App\Exception\ApiException;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -49,7 +46,7 @@ class CoreController extends AbstractController
     private $xDeviceId = null;
 
     /** @var string|null */
-    private $providerKey = null;
+    private $platform = null;
 
     private EntityManagerInterface $entityManager;
 
@@ -74,7 +71,7 @@ class CoreController extends AbstractController
         $this->responseService = $responseService;
         $this->data = json_decode($this->getRequest()->getContent(), false);
         $this->xDeviceId = $this->getRequest()->headers->has('X-Device-Id') ? $this->getRequest()->headers->get('X-Device-Id') : null;
-        $this->providerKey = $this->getRequest()->headers->has('X-Api-Key') ? $this->getRequest()->headers->get('X-Api-Key') : null;
+        $this->platformKey = $this->getRequest()->headers->has('X-Api-Key') ? $this->getRequest()->headers->get('X-Api-Key') : null;
         $this->validator = Validation::createValidator();
     }
 
@@ -123,7 +120,7 @@ class CoreController extends AbstractController
      */
     public function getPlatformKey(): ?string
     {
-        return $this->providerKey;
+        return $this->platformKey;
     }
 
     /**
@@ -133,12 +130,11 @@ class CoreController extends AbstractController
     public function getPlatform(): ?Platform
     {
         $platform = ($this->container->get('doctrine')->getRepository(Platform::class))->findOneBy(['apiKey' => $this->getPlatformKey()]);
-
-        if (!$platform instanceof Platform) {
+        if (!$platform->getResponse() instanceof Platform) {
             throw new ApiCustomException(null, null, Constants::MSG_401_0000);
         }
 
-        return $platform;
+        return $platform->getResponse();
     }
 
     /**
@@ -160,7 +156,7 @@ class CoreController extends AbstractController
     /**
      * @throws ApiCustomException
      */
-    public function checkValidate($key, $constraint, $singleKey = null)
+    public function checkValidate($key, $constraint, $singleKey = null): void
     {
         $violations = $this->getValidator()->validate($key, $constraint);
         if ($violations->count() > 0) {
@@ -172,7 +168,7 @@ class CoreController extends AbstractController
                         throw new ApiCustomException(null, 0, Constants::MSG_401_0000);
                     }
                     if (array_key_exists('X-Device-Id', $key) && is_null($key['X-Device-Id'])) {
-                        throw new ApiCustomException(null, 0, Constants::MSG_401_0004);
+                        throw new ApiCustomException(null, 0, Constants::MSG_412_0007 , ['invalidPropertyName' => 'X-Device-Id']);
                     }
                     $message = is_array($key) ? ucfirst(substr($violation->getPropertyPath(), 1, -1)) : $singleKey;
                     throw new ApiCustomException(null, 0, Constants::MSG_412_9995, ['invalidPropertyName' => $message]);
@@ -202,12 +198,5 @@ class CoreController extends AbstractController
         }
 
         return null;
-    }
-
-    public function validateSessionWithIdPath(): void
-    {
-        if ($this->getRequest()->attributes->has('id') && $this->getRequest()->attributes->get('id') !== $this->getUser()->getId()) {
-            throw new AccessDeniedException();
-        }
     }
 }

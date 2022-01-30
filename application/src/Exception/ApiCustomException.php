@@ -1,12 +1,4 @@
 <?php
-/*
- * @author		furkankulaber
- *
- * @copyright   Raviosoft (https://www.raviosoft.com) (C) 2021
- *
- *  @date        10.05.2021 03:04
- */
-
 namespace App\Exception;
 
 

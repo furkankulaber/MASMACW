@@ -1,12 +1,4 @@
 <?php
-/*
- * @author		furkankulaber
- *
- * @copyright   Raviosoft (https://www.raviosoft.com) (C) 2021
- *
- *  @date        10.03.2021 23:20
- */
-
 namespace App\Service\ManagerService;
 
 use App\Entity\UserSession;

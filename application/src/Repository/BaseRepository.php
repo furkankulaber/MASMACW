@@ -61,6 +61,35 @@ class BaseRepository extends ServiceEntityRepository
         return new RepositoryResponse($entity);
     }
 
+    public function insertBulk($collections)
+    {
+        $bEntity = [];
+        foreach ($collections as $collection)
+        {
+            try {
+                if (!is_object($collection)) {
+                    $entity = new $this->entityClass;
+                    foreach ($collection as $k => $v) {
+                        $setter = 'set' . ucfirst($k);
+                        if (method_exists($entity, $setter)) {
+                            $entity->{$setter}($v);
+                        }
+                    }
+                } else {
+                    $entity = $collection;
+                }
+                $bEntity[] = $entity;
+                $this->_em->persist($entity);
+                $this->_em->flush();
+            } catch (\Exception $e) {
+                dump($e);exit();
+                return new RepositoryResponse(null, false, $e->getMessage(), $e);
+            }
+        }
+
+        return new RepositoryResponse($bEntity);
+    }
+
     /**
      * @param $entity
      * @param array $collection

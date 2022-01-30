@@ -3,6 +3,7 @@
 
 namespace App\Entity;
 
+use App\Repository\UserSessionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -10,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @package App\Entity
  *
  * @ORM\Table(name="`user_sessions`")
- * @ORM\Entity(repositoryClass="UserSessionRepository")
+ * @ORM\Entity(repositoryClass=UserSessionRepository::class)
  */
 class UserSession
 {

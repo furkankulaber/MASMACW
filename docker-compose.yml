@@ -10,7 +10,9 @@ services:
       - '9000:9000'
     volumes:
       - ./application:/var/www/symfony
-    command: sh -c "composer install && bin/console doctrine:schema:update --force && php-fpm"
+    command: sh -c "composer install && bin/console doctrine:schema:update --force --env=prod && php-fpm"
+    depends_on:
+      - database
   nginx:
     container_name: masmapi_nginx
     image: nginx:stable-alpine

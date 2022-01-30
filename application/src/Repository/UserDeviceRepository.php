@@ -2,8 +2,11 @@
 
 namespace App\Repository;
 
+use App\Entity\PlayerDevice;
 use App\Entity\UserDevice;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\Query\Expr\Base;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -12,39 +15,33 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method UserDevice[]    findAll()
  * @method UserDevice[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class UserDeviceRepository extends ServiceEntityRepository
+class UserDeviceRepository extends BaseRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, UserDevice::class);
     }
 
-    // /**
-    //  * @return UserDevice[] Returns an array of UserDevice objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * @param $platform
+     * @param $userId
+     * @return RepositoryResponse
+     */
+    public function userOfDevice($platform, $device): RepositoryResponse
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        try {
+            $qb = $this->createQueryBuilder('ud');
+            $qb->select('ud');
+            $qb->andWhere($qb->expr()->eq('ud.platform',':platform'))->setParameter(':platform',$platform);
+            $qb->andWhere($qb->expr()->eq('ud.device',':device'))->setParameter(':device',$device);
+            $qb->orderBy('ud.id','DESC');
+            $qb->setMaxResults(1);
+            $response = $qb->getQuery()->useQueryCache(false)->getOneOrNullResult();
+        }catch (\Exception $exception)
+        {
+            return new RepositoryResponse($exception);
+        }
 
-    /*
-    public function findOneBySomeField($value): ?UserDevice
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return new RepositoryResponse($response);
     }
-    */
 }

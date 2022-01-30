@@ -2,14 +2,16 @@
 
 namespace App\Entity;
 
+use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
- * @ORM\Table(name="`user`")
+ * @ORM\Table(name="`users`")
  * @method string getUserIdentifier()
  */
 class User implements UserInterface
@@ -42,12 +44,12 @@ class User implements UserInterface
     private $status;
 
     /**
-     * @ORM\Column(type="datetime_immutable")
+     * @ORM\Column(type="datetime")
      */
     private $createdAt;
 
     /**
-     * @ORM\OneToMany(targetEntity=UserDevice::class, mappedBy="user")
+     * @ORM\OneToMany(targetEntity=UserDevice::class, mappedBy="user", cascade={"persist", "remove"})
      */
     private $userDevices;
 
@@ -109,12 +111,12 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?\DateTime
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(\DateTime $createdAt): self
     {
         $this->createdAt = $createdAt;
 
@@ -147,14 +149,14 @@ class User implements UserInterface
     }
 
     /**
-     * @return Collection|UserDevice[]
+     * @return Collection
      */
     public function getUserDevices(): Collection
     {
         return $this->userDevices;
     }
 
-    public function addUserDevice(UserDevice $userDevice): self
+    public function setUserDevice(UserDevice $userDevice): self
     {
         if (!$this->userDevices->contains($userDevice)) {
             $this->userDevices[] = $userDevice;
@@ -174,5 +176,11 @@ class User implements UserInterface
         }
 
         return $this;
+    }
+
+    public function getLastUserOfDevices()
+    {
+        $criteria = Criteria::create()->orderBy(['id' => 'desc'])->setMaxResults(1);
+        return $this->userDevices->matching($criteria);
     }
 }

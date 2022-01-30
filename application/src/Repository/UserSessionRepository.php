@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\UserSession;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -12,39 +11,40 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method UserSession[]    findAll()
  * @method UserSession[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class UserSessionRepository extends ServiceEntityRepository
+class UserSessionRepository extends BaseRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, UserSession::class);
     }
 
-    // /**
-    //  * @return UserSession[] Returns an array of UserSession objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?UserSession
+    /**
+     * @param $userId
+     * @param $deviceId
+     * @return RepositoryResponse
+     */
+    public function getAvailableSessionViaUserId($userId, $deviceId): RepositoryResponse
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        try {
+            $qb = $this->getEntityManager()->createQueryBuilder();
+            $qb->select('s')->from(UserSession::class, 's');
+
+            $qb->where($qb->expr()->eq('s.user', ':user'))->setParameter('user', $userId);
+            $qb->andWhere($qb->expr()->gt('s.expireAt', ':expireAt'))->setParameter('expireAt', new \DateTime('now', new \DateTimeZone('-6')));
+            $qb->andWhere($qb->expr()->eq('s.device', ':device'))->setParameter('device',$deviceId);
+
+            $qb->orderBy('s.expireAt', 'DESC');
+            $qb->setMaxResults(1);
+
+            $return = $qb->getQuery()->getOneOrNullResult();
+        }catch (\Exception $exception)
+        {
+            return new RepositoryResponse($exception);
+        }
+
+        return new RepositoryResponse($return);
+
     }
-    */
+
 }
