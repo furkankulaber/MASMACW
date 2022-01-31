@@ -36,8 +36,8 @@ class AppFixtures extends Fixture
                         'settings' => [
                             'username' => hash('sha256', $application->getAppCode() . '_' . $platformType . '_username'),
                             'password' => hash('sha256', $application->getAppCode() . '_' . $platformType . '_password'),
-                            'url' => 'http://nginx/mock/'.$login,
-                            'callback' =>  'http://nginx/mock/'.$login.'/callback',
+                            'url' => 'http://161.35.201.250:8080/mock/'.$login,
+                            'callback' =>  'http://161.35.201.250:8080/mock/'.$login.'/callback',
                         ],
                         'apiKey' => hash('sha256', $application->getAppCode() . '_' . $platformType)
                     ];

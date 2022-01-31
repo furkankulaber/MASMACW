@@ -14,14 +14,10 @@ echo "STEP 3: PREPARING FILE PERMISSONS AND OWNERSHIP OF symfony FOLDER "
 
 cd /var/www/symfony
 chown -R root:root /var/www/symfony
-chown -R root:root /var/www/symfony
 
 echo "STEP 4: UPDATING SYMFONY4 INSTALLATION IF NECESSARY "
 php -d memory_limit=-1 /usr/local/bin/composer install
-php -d memory_limit=-1 bin/console cache:clear
+php -d /var/www/symfony/bin/console doctrine:schema:drop --force  --env=prod && /var/www/symfony/bin/console doctrine:schema:update --force --env=prod && /var/www/symfony/bin/console doctrine:fixtures:load --append --env=dev
 
-chown -R root:root /var/www/symfony
-
-echo "STEP 6: RESTARTING APACHE SERVER "
-
+echo "STEP 5: STARTING FPM AND SUPERVISOR "
 /usr/bin/supervisord

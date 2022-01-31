@@ -39,7 +39,9 @@ class SubscriptionCheckerCommand extends Command
         $response = $this->purchaseRepository->getWaitingOrExp();
         foreach ($response->getResponse() as $purchase)
         {
-            dump($purchase);
+            $this->purchaseRepository->update($purchase,[
+                'status' => 'q'
+            ]);
             $this->messageBus->dispatch(new Subscription($purchase));
         }
 

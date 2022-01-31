@@ -9,7 +9,6 @@ services:
     volumes:
       - ./application:/var/www/symfony
       - ./application/.messenger-worker.conf:/etc/supervisor/conf.d/messenger-worker.conf
-    command: sh -c "composer install && bin/console doctrine:schema:drop --force  --env=prod && bin/console doctrine:schema:update --force --env=prod && bin/console doctrine:fixtures:load --append"
     depends_on:
       - database
   nginx:

@@ -146,7 +146,7 @@ class PurchaseService
         $purchaseResponse = $purchaseRepo->findOneBy(['id' => $purchaseId]);
         $purchase = $purchaseResponse->getResponse();
         if ($purchase->getStatus() === 'd') {
-            $diff = abs(strtotime("2022-01-31 13:30:14") - time()) / 60;
+            $diff = abs(strtotime($purchase->getUpdateAt()->format(DATE_ATOM)) - time()) / 60;
             if ($diff < 10) {
                 return true;
             }
@@ -177,7 +177,8 @@ class PurchaseService
             return true;
         } else if (isset($receiptResponseData['status']) && $receiptResponseData['status'] === 'wait') {
             $updateResponse = $purchaseRepo->update($purchase, [
-                'status' => 'd'
+                'status' => 'd',
+                'receipt' => $purchase->getReceipt().'2'
             ]);
         } else if (isset($receiptResponseData['status']) && $receiptResponseData['status'] === false) {
             $updateResponse = $purchaseRepo->update($purchase, [

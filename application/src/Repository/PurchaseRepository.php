@@ -28,13 +28,15 @@ class PurchaseRepository extends BaseRepository
             $date = new \DateTime('now', new \DateTimeZone('Europe/Istanbul'));
             $dateTwo = clone $date;
             $dateTwo->sub(new \DateInterval('PT10M'));
-            $sql = 'select * from purchase where status = ? OR (expire_at < ? AND status = ? ) OR (update_at < ? AND status = ?)';
+            $sql = 'select * from purchase where status = ? OR (expire_at < ? AND status = ? ) OR (update_at < ? AND status = ?) OR (update_at < ? AND status = ?)';
             $query = $this->_em->createNativeQuery($sql, $rsm);
             $query->setParameter(1,'w')
                 ->setParameter(2, $date)
                 ->setParameter(3, 'a')
                 ->setParameter(4, $dateTwo)
-                ->setParameter(5, 'd');
+                ->setParameter(5, 'd')
+                ->setParameter(6, $dateTwo)
+                ->setParameter(7, 'q');
             $entity = $query->getResult();
         } catch (\Exception $e) {
             return new RepositoryResponse(null, false, $e->getMessage(), $e);
