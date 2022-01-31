@@ -30,7 +30,6 @@ class ExceptionListener
     public function onKernelException(ExceptionEvent $event)
     {
         $exception = $event->getThrowable();
-        dump($exception);exit();
 
         $data = array(
             'file'=> $exception->getFile(),

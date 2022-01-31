@@ -15,7 +15,8 @@ use Doctrine\ORM\Mapping as ORM;
  *     @ORM\Index(columns={"user_id"})
  *     },
  *     uniqueConstraints={
- *     @ORM\UniqueConstraint(columns={"user","receipt","expire_at"})
+ *     @ORM\UniqueConstraint(columns={"user_id","receipt","expire_at"}),
+ *     @ORM\UniqueConstraint(columns={"user_id","platform_id","device_id","receipt"}),
  * })
  * @ORM\HasLifecycleCallbacks()
  */

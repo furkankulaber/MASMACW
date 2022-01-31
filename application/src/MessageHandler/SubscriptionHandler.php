@@ -18,6 +18,6 @@ final class SubscriptionHandler implements MessageHandlerInterface
 
     public function __invoke(Subscription $message)
     {
-        $this->purchaseService->checkAndUpdatePurchase($message->getPurchase()->getId());
+        $response = $this->purchaseService->checkAndUpdatePurchase($message->getPurchase()->getId());
     }
 }

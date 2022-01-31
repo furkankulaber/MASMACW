@@ -123,14 +123,14 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getRoles()
+    public function getRoles(): array
     {
-        // TODO: Implement getRoles() method.
+        return [];
     }
 
-    public function getSalt()
+    public function getSalt(): ?string
     {
-        // TODO: Implement getSalt() method.
+        return null;
     }
 
     public function eraseCredentials()
@@ -138,9 +138,9 @@ class User implements UserInterface
         // TODO: Implement eraseCredentials() method.
     }
 
-    public function getUsername()
+    public function getUsername(): User
     {
-        // TODO: Implement getUsername() method.
+        return $this;
     }
 
     public function __call($name, $arguments)

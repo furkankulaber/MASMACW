@@ -11,4 +11,4 @@ framework:
 
         routing:
             'App\Message\Subscription': async
-            App\Message\Callback: async
+            'App\Message\Callback': async

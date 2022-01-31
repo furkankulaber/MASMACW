@@ -28,6 +28,7 @@ class AppFixtures extends Fixture
         foreach ($appResponse->getResponse() as $application) {
             if ($application instanceof Application) {
                 foreach ($type as $platformType) {
+                    $login = ($platformType === 'ios')?'apple':'google';
                     $platform[] = [
                         'title' => $application->getTitle() . ' - ' . $platformType,
                         'app' => $application,
@@ -35,7 +36,8 @@ class AppFixtures extends Fixture
                         'settings' => [
                             'username' => hash('sha256', $application->getAppCode() . '_' . $platformType . '_username'),
                             'password' => hash('sha256', $application->getAppCode() . '_' . $platformType . '_password'),
-                            'url' => 'http://localhost/mock/'.$platformType == 'ios'?'apple':'google'
+                            'url' => 'http://nginx/mock/'.$login,
+                            'callback' =>  'http://nginx/mock/'.$login.'/callback',
                         ],
                         'apiKey' => hash('sha256', $application->getAppCode() . '_' . $platformType)
                     ];

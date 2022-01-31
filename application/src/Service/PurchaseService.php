@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Platform;
 use App\Entity\Purchase;
 use App\Entity\UserDevice;
+use App\Message\Callback;
 use App\Message\Subscription;
 use App\Repository\PurchaseRepository;
 use Psr\Container\ContainerInterface;
@@ -68,7 +69,7 @@ class PurchaseService
             $expDate = $receiptCheckResponse->getResponse()->getExpireAt();
             if ($nowDate->getTimestamp() > $expDate->getTimeStamp()) {
                 $receiptCheckResponse = $purchaseRepo->update($receiptCheckResponse->getResponse(), [
-                    'status' => 'a'
+                    'status' => 'w'
                 ]);
                 $this->getMessageBus()->dispatch(new Subscription($receiptCheckResponse->getResponse()));
             }
@@ -106,6 +107,7 @@ class PurchaseService
             if ($insertResponse->getException() || !$insertResponse->getResponse() instanceof Purchase) {
                 return new ServiceResponse($insertResponse->getException());
             }
+            $this->getMessageBus()->dispatch(new Callback($insertResponse->getResponse(),'started'));
             return new ServiceResponse($insertResponse->getResponse());
         }
         return new ServiceResponse(false);
@@ -144,15 +146,16 @@ class PurchaseService
         $purchaseResponse = $purchaseRepo->findOneBy(['id' => $purchaseId]);
         $purchase = $purchaseResponse->getResponse();
         if ($purchase->getStatus() === 'd') {
-            $dateNow = new \DateTime('now', new \DateTimeZone(self::TIMEZONE));
-            $diff = $purchase->getUpdateAt()->getTimestamp() - $dateNow->getTimestamp();
-            if ($diff < 600) {
+            $diff = abs(strtotime("2022-01-31 13:30:14") - time()) / 60;
+            if ($diff < 10) {
                 return true;
             }
         }
         $receiptResponse = $this->requestPlatform($purchase->getReceipt(), $purchase->getPlatform(), '/check');
         if ($receiptResponse->getException()) {
-            $this->getMessageBus()->dispatch(new Subscription($purchase), 60000);
+            $this->getMessageBus()->dispatch(new Subscription($purchase), [
+                new DelayStamp(60000)
+            ]);
             return true;
         }
         $receiptResponseData = $receiptResponse->getResponse();
@@ -164,8 +167,11 @@ class PurchaseService
                 'expireAt' => $expDate,
                 'status' => 'a'
             ]);
+            $this->getMessageBus()->dispatch(new Callback($updateResponse->getResponse(),'renew'));
             if ($updateResponse->getException() || !$updateResponse->getResponse() instanceof Purchase) {
-                $this->getMessageBus()->dispatch(new Subscription($purchase), 60000);
+                $this->getMessageBus()->dispatch(new Subscription($purchase), [
+                    new DelayStamp(60000)
+                ]);
                 return true;
             }
             return true;
@@ -177,9 +183,40 @@ class PurchaseService
             $updateResponse = $purchaseRepo->update($purchase, [
                 'status' => 'e'
             ]);
+            $this->getMessageBus()->dispatch(new Callback($updateResponse->getResponse(),'canceled'));
             return true;
         }
         return true;
+    }
+
+    public function callbackRequest($purchaseId,$event)
+    {
+        $purchaseRepo = ($this->getContainer()->get('doctrine')->getManager())->getRepository(Purchase::class);
+        /** @var Purchase $purchase */
+        $purchaseResponse = $purchaseRepo->findOneBy(['id' => $purchaseId]);
+        $purchase = $purchaseResponse->getResponse();
+
+        $platformSettings = $purchase->getPlatform()->getSettings();
+        $authUsername = $platformSettings['username'];
+        $authPassword = $platformSettings['password'];
+
+        try {
+            $response = $this->client->request(
+                'POST',
+                $platformSettings['callback'],
+                [
+                    'auth_basic' => [$authUsername, $authPassword],
+                    'json' => [
+                        'appID' => $purchase->getPlatform()->getApp(),
+                        'deviceId' => $purchase->getDevice(),
+                        'event' => $event
+                    ],
+                ]
+            );
+            return new ServiceResponse(json_decode($response->getContent(), true));
+        } catch (\Exception $exception) {
+            return new ServiceResponse($exception);
+        }
     }
 
 
