@@ -18,6 +18,7 @@ chown -R root:root /var/www/symfony
 
 echo "STEP 4: UPDATING SYMFONY4 INSTALLATION IF NECESSARY "
 php -d memory_limit=-1 /usr/local/bin/composer install --no-scripts --no-plugins --no-interaction -v
+php -d memory_limit=-1 /usr/local/bin/composer cache:clear
 
 chown -R root:root /var/www/symfony
 

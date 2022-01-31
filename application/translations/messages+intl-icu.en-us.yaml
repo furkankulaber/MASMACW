@@ -1,8 +1,0 @@
-msg.200.0000: 'Your request has been successfully completed.'
-msg.401.0000: 'You must register your application before accessing this endpoint. Please check your API key. If problem persists, you can contact our support team.'
-msg.401.0001: 'Your session is expired. Please re-login.'
-msg.404.0000: 'The requested service endpoint does not exist. Please check service documentation and re-try.'
-msg.412.0007: '{invalidPropertyName} is required. Please supply a value for this parameter.'
-msg.412.9999: 'The value, operands, or options are not valid for the {invalidPropertyName}. Please check related documentation for more information.'
-msg.500.0000: 'An unexpected error occured. You can contact our support team if the error continues.'
-msg.503.0000: 'Maintenance in progress. Estimated maintenance end time is {endTime}. Please come back later.'

@@ -165,7 +165,7 @@ class CoreController extends AbstractController
                 $violation = $violations->get($i);
                 if ($violation->getInvalidValue() === null) {
                     if (array_key_exists('X-Api-Key', $key) && is_null($key['X-Api-Key'])) {
-                        throw new ApiCustomException(null, 0, Constants::MSG_401_0000);
+                        throw new ApiCustomException(null, 0, Constants::MSG_401_0002);
                     }
                     if (array_key_exists('X-Device-Id', $key) && is_null($key['X-Device-Id'])) {
                         throw new ApiCustomException(null, 0, Constants::MSG_412_0007 , ['invalidPropertyName' => 'X-Device-Id']);
