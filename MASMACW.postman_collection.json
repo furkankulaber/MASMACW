@@ -1,0 +1,168 @@
+{
+	"info": {
+		"_postman_id": "e1b02775-bbf6-4937-8f2f-87022da65625",
+		"name": "MASMACW",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var data = pm.response.json();",
+							"pm.environment.set(\"sessionToken\", data.sessionToken);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Api-Key",
+						"value": "{{xapikey}}",
+						"type": "text"
+					},
+					{
+						"key": "X-Device-Id",
+						"value": "{{deviceId}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"language\": \"tr-tr\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/register",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Purchase",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Session-Token",
+						"value": "{{sessionToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"receipt\": \"1231231s231231242\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/purchase",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"purchase"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Purchase Check",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Session-Token",
+						"value": "{{sessionToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/purchase/check",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"purchase",
+						"check"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "xapikey",
+			"value": "2cac083dd7f50b533d3a6073c7df541fe64154aab8a38c167c07e1584cfe078b",
+			"type": "string"
+		},
+		{
+			"key": "sessionToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "deviceId",
+			"value": "{{$guid}}",
+			"type": "string"
+		}
+	]
+}
