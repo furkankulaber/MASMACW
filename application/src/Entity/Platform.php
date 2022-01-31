@@ -9,13 +9,13 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass=PlatformRepository::class)
  * @ORM\Table(name="platforms", indexes={
- *     @ORM\Index(name="app_id_ux", columns={"app_id"}),
+ *     @ORM\Index(columns={"app_id"}),
  *     },
  *     uniqueConstraints={
- *     @ORM\UniqueConstraint(name="api_key_ux", columns={"api_key"}),
- *     @ORM\UniqueConstraint(name="code_ux", columns={"code"}),
- *     @ORM\UniqueConstraint(name="api_code_ux", columns={"code","api_key"}),
- *     @ORM\UniqueConstraint(name="code_ux", columns={"code","api_key","app_id"})
+ *     @ORM\UniqueConstraint(columns={"api_key"}),
+ *     @ORM\UniqueConstraint(columns={"code"}),
+ *     @ORM\UniqueConstraint(columns={"code","api_key"}),
+ *     @ORM\UniqueConstraint(columns={"code","api_key","app_id"})
  * })
  */
 class Platform

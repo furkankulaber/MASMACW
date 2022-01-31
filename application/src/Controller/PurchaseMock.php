@@ -19,7 +19,7 @@ class PurchaseMock extends AbstractController
      * @Route("/google")
      * @Route("/apple")
      */
-    public function googleMock(Request $request)
+    public function createMock(Request $request)
     {
         $data = json_decode($request->getContent(),true);
         $response = [
@@ -35,6 +35,42 @@ class PurchaseMock extends AbstractController
                 $date->add(new \DateInterval('P'.$randDay.'D'));
                 $response = [
                     'status' => true,
+                    'expireAt' => $date->format(DATE_ATOM)
+                ];
+            }
+        }
+
+
+        return JsonResponse::fromJsonString(json_encode($response));
+    }
+
+    /**
+     * @return JsonResponse
+     * @Route("/google/check")
+     * @Route("/apple/check")
+     */
+    public function checkMock(Request $request)
+    {
+        $data = json_decode($request->getContent(),true);
+        $response = [
+            'status' => false
+        ];
+        if(isset($data['receipt']))
+        {
+
+            $lastNumber = substr($data['receipt'],-1);
+            $lastTwo = substr($data['receipt'],-2);
+            if(($lastTwo % 6) === 0){
+                $response = [
+                    'status' => 'wait'
+                ];
+            }
+            if (is_numeric($lastNumber)&(!($lastNumber&1)) && ($lastTwo % 6) !== 0) {
+                $randDay = rand(-10,30);
+                $date = new \DateTime('now', new \DateTimeZone('America/Chicago'));
+                $randDay > 0 ? $date->add(new \DateInterval('P'.$randDay.'D')) : $date->sub(new \DateInterval('P'.ltrim($randDay,'-').'D'));
+                $response = [
+                    'status' => $randDay >= 0,
                     'expireAt' => $date->format(DATE_ATOM)
                 ];
             }

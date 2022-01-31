@@ -7,6 +7,17 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=PurchaseRepository::class)
+ * @ORM\Table(name="purchase", indexes={
+ *     @ORM\Index(columns={"status","expire_at"}),
+ *     @ORM\Index(columns={"status"}),
+ *     @ORM\Index(columns={"expire_at"}),
+ *     @ORM\Index(columns={"receipt"}),
+ *     @ORM\Index(columns={"user_id"})
+ *     },
+ *     uniqueConstraints={
+ *     @ORM\UniqueConstraint(columns={"user","receipt","expire_at"})
+ * })
+ * @ORM\HasLifecycleCallbacks()
  */
 class Purchase
 {
@@ -49,6 +60,11 @@ class Purchase
      * @ORM\Column(type="datetime")
      */
     private $expireAt;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $updateAt;
 
     public function getId(): ?int
     {
@@ -125,5 +141,26 @@ class Purchase
         $this->expireAt = $expireAt;
 
         return $this;
+    }
+
+    public function getUpdateAt(): ?\DateTimeInterface
+    {
+        return $this->updateAt;
+    }
+
+    public function setUpdateAt(\DateTimeInterface $updateAt): self
+    {
+        $this->updateAt = $updateAt;
+
+        return $this;
+    }
+
+    /**
+     * @ORM\PreUpdate()
+     * @ORM\PrePersist()
+     */
+    public function preUpdate()
+    {
+        $this->updateAt = new \DateTime('now', new \DateTimeZone('Europe/Istanbul'));
     }
 }

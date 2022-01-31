@@ -49,7 +49,7 @@ class DeviceIdAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
-        if($request->get("_route") === 'register' || $request->getPathInfo() === '/mock/google' || $request->getPathInfo() === '/mock/apple'){
+        if($request->get("_route") === 'register' || str_contains($request->getPathInfo(),'mock')){
             return false;
         }
         return true;

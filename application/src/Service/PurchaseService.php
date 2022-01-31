@@ -5,8 +5,11 @@ namespace App\Service;
 use App\Entity\Platform;
 use App\Entity\Purchase;
 use App\Entity\UserDevice;
+use App\Message\Subscription;
 use App\Repository\PurchaseRepository;
 use Psr\Container\ContainerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 
@@ -17,15 +20,19 @@ class PurchaseService
     protected ContainerInterface $container;
     protected HttpClientInterface $client;
     private $config;
+    protected MessageBusInterface $messageBus;
+
+    const TIMEZONE = 'Europe/Istanbul';
 
     /**
      * @param ContainerInterface $container
      * @param HttpClientInterface $client
      */
-    public function __construct(ContainerInterface $container, HttpClientInterface $client)
+    public function __construct(ContainerInterface $container, HttpClientInterface $client, MessageBusInterface $bus)
     {
         $this->container = $container;
         $this->client = $client;
+        $this->messageBus = $bus;
     }
 
     /**
@@ -44,38 +51,60 @@ class PurchaseService
         return $this->client;
     }
 
+    /**
+     * @return MessageBusInterface
+     */
+    public function getMessageBus(): MessageBusInterface
+    {
+        return $this->messageBus;
+    }
+
+    public function checkPurchase(UserDevice $userDevice)
+    {
+        $purchaseRepo = ($this->getContainer()->get('doctrine')->getManager())->getRepository(Purchase::class);
+        $receiptCheckResponse = $purchaseRepo->findOneBy(['device' => $userDevice, 'status' => 'a']);
+        if ($receiptCheckResponse->getResponse() instanceof Purchase) {
+            $nowDate = new \DateTime('now', new \DateTimeZone(self::TIMEZONE));
+            $expDate = $receiptCheckResponse->getResponse()->getExpireAt();
+            if ($nowDate->getTimestamp() > $expDate->getTimeStamp()) {
+                $receiptCheckResponse = $purchaseRepo->update($receiptCheckResponse->getResponse(), [
+                    'status' => 'a'
+                ]);
+                $this->getMessageBus()->dispatch(new Subscription($receiptCheckResponse->getResponse()));
+            }
+            return new ServiceResponse($receiptCheckResponse->getResponse());
+        }
+        return new ServiceResponse(false);
+    }
+
     public function purchaseEvent($receipt, UserDevice $userDevice)
     {
         $purchaseRepo = ($this->getContainer()->get('doctrine')->getManager())->getRepository(Purchase::class);
-        $receiptCheckResponse = $purchaseRepo->findOneBy(['receipt' => $receipt, 'device' => $userDevice]);
-        if($receiptCheckResponse->getResponse() instanceof Purchase)
-        {
+        $receiptCheckResponse = $purchaseRepo->findOneBy(['device' => $userDevice, 'status' => 'a']);
+        if ($receiptCheckResponse->getResponse() instanceof Purchase) {
             return new ServiceResponse($receiptCheckResponse->getResponse());
         }
 
         $platform = $userDevice->getPlatform();
         $receiptResponse = $this->requestPlatform($receipt, $platform);
-        if($receiptResponse->getException())
-        {
+        if ($receiptResponse->getException()) {
             return new ServiceResponse($receiptResponse->getException());
         }
         $receiptResponseData = $receiptResponse->getResponse();
-        if(isset($receiptResponseData['status']) && $receiptResponseData['status'] === true)
-        {
+        if (isset($receiptResponseData['status']) && $receiptResponseData['status'] === true) {
             /** @var PurchaseRepository $purchaseRepo */
             $expDate = new \DateTime($receiptResponseData['expireAt']);
-            $expDate->setTimezone(new \DateTimeZone('Europe/Istanbul'));
+            $expDate->setTimezone(new \DateTimeZone(self::TIMEZONE));
             $insertResponse = $purchaseRepo->insert([
                 'expireAt' => $expDate,
                 'user' => $userDevice->getUser(),
                 'platform' => $userDevice->getPlatform(),
                 'device' => $userDevice,
                 'receipt' => $receipt,
-                'status' => 's'
+                'status' => 'a'
             ]);
-            if($insertResponse->getException() || !$insertResponse->getResponse() instanceof Purchase)
-            {
-                return new ServiceResponse($receiptResponse->getException());
+            if ($insertResponse->getException() || !$insertResponse->getResponse() instanceof Purchase) {
+                return new ServiceResponse($insertResponse->getException());
             }
             return new ServiceResponse($insertResponse->getResponse());
         }
@@ -84,9 +113,8 @@ class PurchaseService
     }
 
 
-    protected function requestPlatform($receipt, Platform $platform)
+    protected function requestPlatform($receipt, Platform $platform, $url = '')
     {
-
         $platformSettings = $platform->getSettings();
         $authUsername = $platformSettings['username'];
         $authPassword = $platformSettings['password'];
@@ -94,9 +122,9 @@ class PurchaseService
         try {
             $response = $this->client->request(
                 'POST',
-                $platformSettings['url'],
+                $platformSettings['url'] . $url,
                 [
-                    'auth_basic' => [$authUsername,$authPassword],
+                    'auth_basic' => [$authUsername, $authPassword],
                     'json' => [
                         'receipt' => $receipt
                     ],
@@ -106,6 +134,52 @@ class PurchaseService
         } catch (\Exception $exception) {
             return new ServiceResponse($exception);
         }
+    }
+
+    public function checkAndUpdatePurchase($purchaseId)
+    {
+
+        $purchaseRepo = ($this->getContainer()->get('doctrine')->getManager())->getRepository(Purchase::class);
+        /** @var Purchase $purchase */
+        $purchaseResponse = $purchaseRepo->findOneBy(['id' => $purchaseId]);
+        $purchase = $purchaseResponse->getResponse();
+        if ($purchase->getStatus() === 'd') {
+            $dateNow = new \DateTime('now', new \DateTimeZone(self::TIMEZONE));
+            $diff = $purchase->getUpdateAt()->getTimestamp() - $dateNow->getTimestamp();
+            if ($diff < 600) {
+                return true;
+            }
+        }
+        $receiptResponse = $this->requestPlatform($purchase->getReceipt(), $purchase->getPlatform(), '/check');
+        if ($receiptResponse->getException()) {
+            $this->getMessageBus()->dispatch(new Subscription($purchase), 60000);
+            return true;
+        }
+        $receiptResponseData = $receiptResponse->getResponse();
+        if (isset($receiptResponseData['status']) && $receiptResponseData['status'] === true) {
+            /** @var PurchaseRepository $purchaseRepo */
+            $expDate = new \DateTime($receiptResponseData['expireAt']);
+            $expDate->setTimezone(new \DateTimeZone(self::TIMEZONE));
+            $updateResponse = $purchaseRepo->update($purchase, [
+                'expireAt' => $expDate,
+                'status' => 'a'
+            ]);
+            if ($updateResponse->getException() || !$updateResponse->getResponse() instanceof Purchase) {
+                $this->getMessageBus()->dispatch(new Subscription($purchase), 60000);
+                return true;
+            }
+            return true;
+        } else if (isset($receiptResponseData['status']) && $receiptResponseData['status'] === 'wait') {
+            $updateResponse = $purchaseRepo->update($purchase, [
+                'status' => 'd'
+            ]);
+        } else if (isset($receiptResponseData['status']) && $receiptResponseData['status'] === false) {
+            $updateResponse = $purchaseRepo->update($purchase, [
+                'status' => 'e'
+            ]);
+            return true;
+        }
+        return true;
     }
 
 
