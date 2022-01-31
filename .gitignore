@@ -6,7 +6,8 @@ mysql
 /*/.env.*.local
 /*/config/secrets/prod/prod.decrypt.private.w
 /*/public/bundles/
-/*/var/
+/*/var/cache
+/*/var/log
 /*/vendor/
 /db-data
 .idea
